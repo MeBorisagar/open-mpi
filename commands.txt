@@ -1,0 +1,2 @@
+mpicc mpi_isend_recv.c -o mpi_isend_recv
+mpirun -np 2 ./mpi_isend_recv
