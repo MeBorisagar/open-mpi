@@ -2,7 +2,7 @@
 #include <vector>
 #include <algorithm>
 #include <set>
-#include <mpi.h>
+#include <mpi.h> 
 #include <unistd.h>
 
 using namespace std;
@@ -50,8 +50,9 @@ vector<vector<int>> get_graph_topology(int world_size) {
         return {
             {1, 3},
             {0, 2},
-            {1, 3},
+            {3, 1},
             {0, 2}
+            
         };
     }
     if (world_size > 1) {
@@ -125,7 +126,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    // ==================== MAIN MESSAGE LOOP ====================
+    //  MAIN MESSAGE LOOP
     bool algorithm_running = true;
     MPI_Status status;
 
@@ -140,7 +141,7 @@ int main(int argc, char** argv) {
         int tag = status.MPI_TAG;
         int source = status.MPI_SOURCE;
 
-        // ==================== HANDLE EXPLORE ====================
+        // HANDLE EXPLORE 
         if (tag == EXPLORE_TAG) {
             ExploreMessage msg;
             MPI_Recv(&msg, sizeof(ExploreMessage), MPI_BYTE, source, 
@@ -181,7 +182,7 @@ int main(int argc, char** argv) {
             }
         }
 
-        // ==================== HANDLE ACCEPT ====================
+        // HANDLE ACCEPT 
         else if (tag == ACCEPT_TAG) {
             AcceptMessage msg;
             MPI_Recv(&msg, sizeof(AcceptMessage), MPI_BYTE, source, 
@@ -201,7 +202,7 @@ int main(int argc, char** argv) {
             }
 
             // Check if exploration complete
-            if (pending_neighbors.empty() && received_proceed) {
+            if (pending_neighbors.empty() ) {
                 explored = true;
                 
                 // Send LEVEL_COMPLETE
@@ -221,7 +222,7 @@ int main(int argc, char** argv) {
             }
         }
 
-        // ==================== HANDLE REJECT ====================
+        //  HANDLE REJECT 
         else if (tag == REJECT_TAG) {
             RejectMessage msg;
             MPI_Recv(&msg, sizeof(RejectMessage), MPI_BYTE, source, 
@@ -233,7 +234,7 @@ int main(int argc, char** argv) {
             pending_neighbors.erase(msg.sender_id);
 
             // Check if exploration complete
-            if (pending_neighbors.empty() && received_proceed) {
+            if (pending_neighbors.empty() ) {
                 explored = true;
                 
                 // Send LEVEL_COMPLETE
@@ -253,7 +254,7 @@ int main(int argc, char** argv) {
             }
         }
 
-        // ==================== HANDLE PROCEED ====================
+        //  HANDLE PROCEED 
         else if (tag == PROCEED_TAG) {
             ProceedMessage msg;
             MPI_Recv(&msg, sizeof(ProceedMessage), MPI_BYTE, source, 
@@ -295,7 +296,7 @@ int main(int argc, char** argv) {
             }
         }
 
-        // ==================== HANDLE LEVEL_COMPLETE (ROOT ONLY) ====================
+        //  HANDLE LEVEL_COMPLETE (ROOT ONLY) 
         else if (tag == LEVEL_COMPLETE_TAG && world_rank == ROOT_RANK) {
             LevelCompleteMessage msg;
             MPI_Recv(&msg, sizeof(LevelCompleteMessage), MPI_BYTE, source, 
@@ -320,17 +321,17 @@ int main(int argc, char** argv) {
                  << completed_at_level[msg.sender_level] << "/" 
                  << nodes_at_level[msg.sender_level].size() << endl;
 
-            // Check if level is complete
+            // check if level complete
             if (completed_at_level[msg.sender_level] == 
                 (int)nodes_at_level[msg.sender_level].size()) {
                 
-                cout << "\n*** ROOT: Level " << msg.sender_level 
-                     << " COMPLETE! ***" << endl;
+                cout << "\n ROOT: Level " << msg.sender_level 
+                     << " COMPLETE! " << endl;
 
                 int next_level = msg.sender_level + 1;
                 
                 if (!nodes_at_level[next_level].empty()) {
-                    // Send PROCEED to next level
+                    //  send proced to nect level
                     cout << "ROOT: Sending PROCEED(" << next_level 
                          << ") to " << nodes_at_level[next_level].size() 
                          << " nodes" << endl;
@@ -342,11 +343,11 @@ int main(int argc, char** argv) {
                         cout << "ROOT: Sent PROCEED to node " << node << endl;
                     }
                 } else {
-                    // Algorithm complete
+                    
                     cout << "\n*** ROOT: BFS TREE CONSTRUCTION COMPLETE! ***\n" 
                          << endl;
                     
-                    // Send TERMINATE to all nodes
+                    // sending termination to all
                     for (int i = 1; i < world_size; ++i) {
                         MPI_Send(NULL, 0, MPI_BYTE, i, TERMINATE_TAG, 
                                 MPI_COMM_WORLD);
@@ -356,7 +357,7 @@ int main(int argc, char** argv) {
             }
         }
 
-        // ==================== HANDLE TERMINATE ====================
+     
         else if (tag == TERMINATE_TAG) {
             MPI_Recv(NULL, 0, MPI_BYTE, ROOT_RANK, TERMINATE_TAG, 
                     MPI_COMM_WORLD, &status);
@@ -365,10 +366,10 @@ int main(int argc, char** argv) {
         }
     }
 
-    // ==================== FINAL SYNCHRONIZATION ====================
+
     MPI_Barrier(MPI_COMM_WORLD);
 
-    // ==================== OUTPUT RESULTS ====================
+  
     cout << "\n========================================" << endl;
     cout << "Rank " << world_rank << " - FINAL BFS TREE RESULT" << endl;
     cout << "========================================" << endl;
