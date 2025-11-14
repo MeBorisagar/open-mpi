@@ -1,2 +1,9 @@
+For c :
+
 mpicc mpi_isend_recv.c -o mpi_isend_recv
 mpirun -np 2 ./mpi_isend_recv
+
+For C++ : 
+
+mpic++ mpi_isend_recv.c -o mpi_isend_recv
+mpirun -np 4 ./mpi_isend_recv
